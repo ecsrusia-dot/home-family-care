@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   CleanserType,
   PackType,
@@ -13,6 +13,8 @@ import {
   step6Subs,
   stepMeta,
 } from '../meta';
+import { useSkincare } from '../useSkincare';
+import { uniqueBrands } from '../brand';
 
 interface ProductFormProps {
   initial?: Partial<Product>;
@@ -59,6 +61,10 @@ export default function ProductForm({
   onChange,
   onValidity,
 }: ProductFormProps) {
+  const { data } = useSkincare();
+  // 기존 인벤토리 브랜드 목록 — datalist 자동완성에 사용 (오타·표기 분기 방지)
+  const brandSuggestions = useMemo(() => uniqueBrands(data.inventory), [data.inventory]);
+
   const [brand, setBrand] = useState(initial?.brand ?? '');
   const [name, setName] = useState(initial?.name ?? '');
   const [step, setStep] = useState<SkincareStep>(initial?.step ?? 4);
@@ -125,9 +131,16 @@ export default function ProductForm({
           <input
             value={brand}
             onChange={(e) => setBrand(e.target.value)}
-            placeholder="예: 에스트라"
+            placeholder="예: VALMONT"
+            list="brand-suggestions"
             className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
           />
+          {/* 기존 브랜드 자동완성 — 입력 시 일치하는 항목이 드롭다운으로 나옴 */}
+          <datalist id="brand-suggestions">
+            {brandSuggestions.map((b) => (
+              <option key={b} value={b} />
+            ))}
+          </datalist>
         </Field>
         <Field label="제품명 *" className="col-span-2">
           <input
@@ -138,6 +151,13 @@ export default function ProductForm({
           />
         </Field>
       </div>
+      {brandSuggestions.length > 0 && (
+        <div className="-mt-2 text-[11px] text-slate-400">
+          💡 기존 등록 브랜드: {brandSuggestions.slice(0, 5).join(', ')}
+          {brandSuggestions.length > 5 ? ` 외 ${brandSuggestions.length - 5}개` : ''}
+          {' — '}동일 브랜드면 같은 표기를 사용해 주세요.
+        </div>
+      )}
 
       {/* 단계 선택 */}
       <Field label="단계 *">

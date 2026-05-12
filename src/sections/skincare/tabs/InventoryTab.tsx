@@ -10,6 +10,7 @@ import { stepMeta } from '../meta';
 import type { Product, SkincareStep } from '../types';
 import { getProductBadges, newProductId } from '../utils';
 import { useSkincare } from '../useSkincare';
+import { canonicalizeBrand, uniqueBrands } from '../brand';
 
 interface InventoryTabProps {
   /** AI 등록 모달에서 "내 정보 열기" 트리거를 위해 부모로 위임 */
@@ -58,10 +59,15 @@ export default function InventoryTab({ onOpenProfile }: InventoryTabProps) {
     if (!draft || !formValid) return;
     setSaving(true);
     try {
+      const canonicalBrand = canonicalizeBrand(
+        draft.brand,
+        uniqueBrands(data.inventory),
+      );
       const product: Product = {
         id: newProductId(),
         createdAt: new Date().toISOString(),
         ...draft,
+        brand: canonicalBrand,
       };
       await update({ inventory: [...data.inventory, product] });
       setAdding(false);
@@ -77,9 +83,13 @@ export default function InventoryTab({ onOpenProfile }: InventoryTabProps) {
     if (!editing || !draft || !formValid) return;
     setSaving(true);
     try {
+      // 수정 시에는 자기 자신을 제외한 다른 브랜드들과만 비교 (자기 자신 표기 보존)
+      const others = data.inventory.filter((p) => p.id !== editing.id);
+      const canonicalBrand = canonicalizeBrand(draft.brand, uniqueBrands(others));
       const updated: Product = {
         ...editing,
         ...draft,
+        brand: canonicalBrand,
       };
       const next = data.inventory.map((p) => (p.id === editing.id ? updated : p));
       await update({ inventory: next });

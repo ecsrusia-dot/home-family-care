@@ -28,6 +28,7 @@ import IngredientInfoModal from './IngredientInfoModal';
 import StepMoveModal from './StepMoveModal';
 import { reanalyzeProduct } from '../gemini';
 import { useSkincare } from '../useSkincare';
+import { uniqueBrands } from '../brand';
 
 interface Props {
   product: Product | null;
@@ -145,11 +146,12 @@ export default function ProductDetailModal({
         brand: product.brand,
         name: product.name,
         apiKey: data.profile.apiKey,
+        existingBrands: uniqueBrands(data.inventory),
       });
       const updated: Product = {
         ...product,
         ...result,
-        // 사용자가 손으로 바꿔둔 브랜드/이름은 유지
+        // 사용자가 손으로 바꿔둔 브랜드/이름은 유지 (재분석으로 안 덮어씀)
         brand: product.brand,
         name: product.name,
       };
@@ -232,19 +234,19 @@ export default function ProductDetailModal({
                 </div>
               </div>
             ) : (
-              <div className="relative">
-                <div className="text-yellow-400 text-xs font-bold mb-2 tracking-widest uppercase">
+              <div>
+                <div className="text-yellow-400 text-xs font-bold mb-2 tracking-widest uppercase pr-10">
                   {product.brand}
                 </div>
-                <h3 className="text-white text-xl font-bold leading-snug pr-10 break-keep">
+                <h3 className="text-white text-xl font-bold leading-snug break-keep">
                   {product.name}
                 </h3>
                 <button
                   onClick={startNameEdit}
-                  className="absolute top-0 right-0 bg-white/10 hover:bg-white/25 text-yellow-400 p-2 rounded-lg border border-white/20 transition"
-                  title="브랜드/제품명 수정"
+                  className="mt-3 inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/25 text-yellow-400 px-3 py-1.5 rounded-lg border border-white/20 text-[11px] font-bold transition"
+                  title="브랜드와 제품명을 수정합니다"
                 >
-                  <Pencil size={14} />
+                  <Pencil size={11} /> 이름 수정
                 </button>
               </div>
             )}
@@ -371,13 +373,13 @@ export default function ProductDetailModal({
               </Section>
             )}
 
-            {/* 권장 사용법 (yellow box) */}
+            {/* 권장 사용법 (yellow box) — AI가 "1) ... 2) ..." 단계별로 작성, 줄바꿈 보존 */}
             {product.usage && (
               <div className="bg-yellow-50 p-5 rounded-2xl border border-yellow-100">
                 <h4 className="text-xs font-bold text-yellow-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                   <Zap size={12} /> 권장 사용법
                 </h4>
-                <p className="text-sm text-yellow-900 leading-relaxed break-keep">
+                <p className="text-sm text-yellow-900 leading-relaxed break-keep whitespace-pre-line">
                   {product.usage}
                 </p>
               </div>

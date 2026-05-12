@@ -10,6 +10,7 @@ import {
 } from '../gemini';
 import { useSkincare } from '../useSkincare';
 import { newProductId } from '../utils';
+import { canonicalizeBrand, uniqueBrands } from '../brand';
 import type { Product } from '../types';
 
 interface Props {
@@ -78,7 +79,10 @@ export default function AiRegisterModal({ open, onClose, onOpenProfile }: Props)
         imageBase64: imageBase64 || undefined,
         imageMime,
         apiKey: data.profile.apiKey,
+        existingBrands: uniqueBrands(data.inventory),
       });
+      // 안전망: AI가 혹시 다른 표기로 반환해도 우리 쪽에서 한 번 더 통일
+      result.brand = canonicalizeBrand(result.brand, uniqueBrands(data.inventory));
       setAiResult(result);
       setStage('edit');
     } catch (e) {
@@ -91,10 +95,16 @@ export default function AiRegisterModal({ open, onClose, onOpenProfile }: Props)
     if (!draft || !formValid || !aiResult) return;
     setSaving(true);
     try {
+      // 사용자가 폼에서 brand를 다시 손댔을 수도 있으므로 마지막에 한 번 더 정규화
+      const canonicalBrand = canonicalizeBrand(
+        draft.brand,
+        uniqueBrands(data.inventory),
+      );
       const product: Product = {
         id: newProductId(),
         createdAt: new Date().toISOString(),
         ...draft,
+        brand: canonicalBrand,
         // AI가 준 추가 메타데이터도 함께 저장 (수동 편집 폼엔 노출 안 됨)
         time: aiResult.time,
         usage: aiResult.usage,
@@ -272,9 +282,11 @@ export default function AiRegisterModal({ open, onClose, onOpenProfile }: Props)
             ✨ AI 분석 완료! 아래 내용을 확인하고 필요하면 수정한 후 [등록]을 누르세요.
           </div>
           {aiResult.usage && (
-            <div className="bg-slate-50 rounded-xl p-3">
-              <div className="text-xs font-bold text-slate-500 mb-1">권장 사용법</div>
-              <div className="text-sm text-slate-700 leading-snug">{aiResult.usage}</div>
+            <div className="bg-yellow-50 rounded-xl p-3 border border-yellow-100">
+              <div className="text-xs font-bold text-yellow-800 mb-1">권장 사용법</div>
+              <div className="text-sm text-yellow-900 leading-snug whitespace-pre-line">
+                {aiResult.usage}
+              </div>
             </div>
           )}
           {aiResult.precautions && (

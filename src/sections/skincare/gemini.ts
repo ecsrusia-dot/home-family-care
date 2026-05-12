@@ -168,7 +168,13 @@ export interface AiAnalyzedProduct {
   precautions?: string;
 }
 
-const ANALYZE_PROMPT = `당신은 세계 최고의 스킨케어 전문가입니다. 제공된 화장품의 이름이나 이미지를 분석하여 아래의 '출력 양식'에 맞춰 오직 순수한 JSON 형식으로만 대답하세요. 부가적인 설명이나 마크다운 기호(\`\`\` 등)는 절대 쓰지 마세요. description, usage, precautions는 반드시 한국어(Korean)로 작성해야 합니다.
+function buildAnalyzePrompt(existingBrands: string[]): string {
+  const brandsList =
+    existingBrands.length > 0
+      ? `\n\n[기존 등록된 브랜드 목록]\n${existingBrands.join(', ')}\n→ 분석할 제품이 위 브랜드 중 하나(한글·영문·띄어쓰기 변형 포함)와 동일하다면, brand 필드는 반드시 위 목록의 표기를 그대로 사용하세요. 예: 입력이 "라메르"여도 목록에 "LA MER"가 있으면 "LA MER"로 출력.`
+      : '';
+
+  return `당신은 세계 최고의 스킨케어 전문가입니다. 제공된 화장품의 이름이나 이미지를 분석하여 아래의 '출력 양식'에 맞춰 오직 순수한 JSON 형식으로만 대답하세요. 부가적인 설명이나 마크다운 기호(\`\`\` 등)는 절대 쓰지 마세요. description, usage, precautions는 반드시 한국어(Korean)로 작성해야 합니다.
 
 [핵심 지시사항]
 1. 성분 추출 시 영문 키워드로 분리:
@@ -180,10 +186,18 @@ const ANALYZE_PROMPT = `당신은 세계 최고의 스킨케어 전문가입니�
 4. step 6일 때 subCategory 필수 (general/suncream)
 5. step 7일 때 packType 필수 (exfoliate/sleeping/mask/mist)
 
+[usage 작성 규칙]
+"usage"는 사용자가 실제로 따라할 수 있도록 단계별 절차로 작성하세요.
+- 반드시 3~5개 번호 단계 ("1) ... 2) ... 3) ..." 형식)
+- 각 단계는 구체적 행동: 사용량(예: 1펌프, 동전 크기), 부위(이마/볼/턱 등), 방향(안→밖, 위→아래), 시간(아침/저녁/주 N회), 후속 동작(흡수까지 두드리기 등)을 포함
+- 줄바꿈은 "\\n"으로 구분 (실제 줄바꿈 문자)
+예시: "1) 세안 후 토너로 결을 정돈한다.\\n2) 펌프를 1~2번 눌러 손바닥에 덜고 양 볼에 점찍어 바른다.\\n3) 안에서 바깥으로 부드럽게 펴 바르고 흡수될 때까지 가볍게 두드린다.\\n4) 아침·저녁 모두 사용 가능하지만, 특히 저녁에 사용하면 효과적이다."${brandsList}
+
 [출력 양식]
-{"brand":"영문 브랜드명","name":"한국어 제품명","step":숫자(1~7),"cleanserType":"(step 1일때만)","subCategory":"(step 6일때만)","packType":"(step 7일때만)","time":"day|night|all","weight":"light|medium|heavy","keyIngredients":[],"cautionIngredients":[],"description":"한국어 특징 2줄","usage":"한국어 사용법 2줄","precautions":"한국어 주의사항 2줄"}
+{"brand":"브랜드 표기","name":"한국어 제품명","step":숫자(1~7),"cleanserType":"(step 1일때만)","subCategory":"(step 6일때만)","packType":"(step 7일때만)","time":"day|night|all","weight":"light|medium|heavy","keyIngredients":[],"cautionIngredients":[],"description":"한국어 특징 2줄","usage":"1) ... 2) ... 3) ... (단계별 번호 + \\n 줄바꿈)","precautions":"한국어 주의사항 2줄"}
 
 [분석할 제품 정보]: `;
+}
 
 /** 레거시 packType 정규화 */
 function normalizePackType(pt: unknown): PackType {
@@ -213,15 +227,26 @@ export function sanitizeAiResult(raw: AiAnalyzedProduct): AiAnalyzedProduct {
 
 /**
  * 제품명 또는 이미지로 제품 정보를 AI 분석.
+ *
+ * @param existingBrands 인벤토리에 이미 있는 브랜드 목록. 전달하면 AI가 동일 브랜드를
+ *                       기존 표기로 통일해서 반환한다 (라메르 ↔ LA MER 같은 변형 흡수).
  */
 export async function analyzeProduct(args: {
   input: string;
   imageBase64?: string;
   imageMime?: string;
   apiKey: string;
+  existingBrands?: string[];
 }): Promise<AiAnalyzedProduct> {
-  const { input, imageBase64, imageMime = 'image/jpeg', apiKey } = args;
-  const parts: GeminiPart[] = [{ text: ANALYZE_PROMPT + (input || '제품을 분석해주세요') }];
+  const {
+    input,
+    imageBase64,
+    imageMime = 'image/jpeg',
+    apiKey,
+    existingBrands = [],
+  } = args;
+  const promptText = buildAnalyzePrompt(existingBrands) + (input || '제품을 분석해주세요');
+  const parts: GeminiPart[] = [{ text: promptText }];
   if (imageBase64) parts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } });
 
   const responseText = await callGemini(
@@ -240,11 +265,13 @@ export async function reanalyzeProduct(args: {
   brand: string;
   name: string;
   apiKey: string;
+  existingBrands?: string[];
 }): Promise<AiAnalyzedProduct> {
-  const { brand, name, apiKey } = args;
+  const { brand, name, apiKey, existingBrands } = args;
   return analyzeProduct({
     input: `${brand} ${name}`.trim(),
     apiKey,
+    existingBrands,
   });
 }
 

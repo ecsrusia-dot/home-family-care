@@ -16,7 +16,10 @@ import { ingredientDict } from './meta';
 import type {
   CleanserType,
   LearnedIngredients,
+  MechanismReport,
   PackType,
+  Product,
+  RoutineRecord,
   SkincareStep,
   Step6Sub,
   Weight,
@@ -317,6 +320,95 @@ export async function learnIngredients(args: {
     console.error('[gemini] 성분 학습 실패 (무시):', e);
     return {};
   }
+}
+
+/**
+ * 저장된 루틴 기록에 대한 시너지 메커니즘 분석.
+ * 각 제품이 앞 단계와 어떻게 시너지를 내는지, 종합 평가, 개선 권장사항 반환.
+ */
+export async function generateMechanismReport(args: {
+  record: RoutineRecord;
+  inventory: Product[];
+  apiKey: string;
+}): Promise<MechanismReport> {
+  const { record, inventory, apiKey } = args;
+
+  // step 순서대로 제품 정렬
+  const orderedItems: { stepLabel: string; brand: string; name: string; keyIngredients: string[]; cautionIngredients: string[] }[] = [];
+  for (const s of [1, 2, 3, 4, 5, 6, 7] as SkincareStep[]) {
+    const ids = record.routine[s] ?? [];
+    ids.forEach((id, idx) => {
+      const p = inventory.find((i) => i.id === id);
+      if (!p) return;
+      const label = ids.length > 1 ? `S${s}-${idx + 1}` : `S${s}`;
+      orderedItems.push({
+        stepLabel: label,
+        brand: p.brand,
+        name: p.name,
+        keyIngredients: p.keyIngredients ?? [],
+        cautionIngredients: p.cautionIngredients ?? [],
+      });
+    });
+  }
+
+  if (orderedItems.length === 0) {
+    throw new Error('분석할 제품이 없습니다.');
+  }
+
+  const timeLabel = record.timeOfDay === 'day' ? '아침/낮' : '저녁/밤';
+  const themeText =
+    record.timeOfDay === 'day' ? 'DAY DEFENSE MECHANISM' : 'NIGHT REPAIR MECHANISM';
+
+  const prompt = `당신은 세계 최고의 피부과학 연구원입니다. 아래 저장된 스킨케어 루틴을 **시너지 메커니즘 중심**으로 분석합니다. 단순 제품 소개가 아니라, **앞 단계 제품이 만든 상태 위에 지금 단계가 어떻게 반응·상승작용·중화하는지**를 설명하세요.
+
+[루틴 정보]
+- 날짜: ${record.date}
+- 시간대: ${timeLabel}
+- 컨디션: ${record.condition}
+- 케어 목표: ${record.goal}
+- 기록 당시 점수: ${record.score}점
+- 사용 제품 (Step 순서):
+${orderedItems.map((it) => `  ${it.stepLabel}. ${it.brand} ${it.name} — 핵심성분: ${it.keyIngredients.join(', ') || '없음'} / 주의성분: ${it.cautionIngredients.join(', ') || '없음'}`).join('\n')}
+
+[출력 JSON 스키마 — 오직 순수 JSON만, 마크다운 펜스 절대 금지]
+{
+  "title": "오늘의 ${timeLabel} 루틴 시너지 메커니즘 분석 (10자 이내 짧은 부제목 한 줄 추가)",
+  "steps": [
+    {
+      "stepLabel": "S1 또는 S4-1 형식",
+      "brand": "BRAND",
+      "productName": "한국어 제품명",
+      "role": "핵심 작용원리 3~7글자 (예: 지질막 보호 세정, 수분 자석, 표적 진정)",
+      "body": "2~3문장으로 작용 메커니즘 설명. 첫 제품(S1)은 본인의 작용. 두 번째 이상은 반드시 앞 단계가 만든 상태(수분막/흡수로/진정상태)와 연결해서 시너지를 설명. 줄바꿈은 \\n으로.",
+      "result": "이 단계 직후의 피부 상태 한 줄 (예: 수분 고속도로 개통, 유효성분 증발 차단)"
+    }
+  ],
+  "conclusion": "3문단으로 평가: 1)이 루틴의 설계 철학, 2)주요 시너지 포인트, 3)전반 평가. 각 문단은 2~3문장. 문단 사이 줄바꿈 \\n\\n 으로 구분.",
+  "improvements": "객관적 관점에서 발견된 문제점이 있으면 '⚠️ 개선 권장:' 헤더 후 구체적 문제·해결책을 작성. 사소한 개선만 있으면 '💡 참고:' 헤더로 가볍게. 정말 완벽하면 빈 문자열. 억지로 좋은 말 금지."
+}
+
+[엄격한 요구사항]
+1. steps 배열은 "사용 제품" 순서 그대로 일대일 대응. 순서 변경 절대 금지.
+2. 같은 step에 제품 2개 이상이면 stepLabel을 "S4-1", "S4-2"로 분리.
+3. body는 단답형 2~3문장, 장황한 설명 금지.
+4. 모든 줄바꿈은 실제 줄바꿈(\\n) 사용. <p>나 <br> 같은 HTML 태그 사용 금지.
+5. JSON만 출력. 부가 설명·마크다운 펜스 일체 금지.
+6. 부제: ${themeText} 가 영문 부제. title 안에 자연스럽게 녹여서 넣을 것.`;
+
+  const responseText = await callGemini(
+    { contents: [{ role: 'user', parts: [{ text: prompt }] }] },
+    apiKey,
+  );
+  const parsed = extractJsonFromText<Omit<MechanismReport, 'generatedAt'>>(responseText);
+
+  if (!parsed.steps || !Array.isArray(parsed.steps)) {
+    throw new Error('리포트 형식이 올바르지 않습니다.');
+  }
+
+  return {
+    ...parsed,
+    generatedAt: new Date().toISOString(),
+  };
 }
 
 /**

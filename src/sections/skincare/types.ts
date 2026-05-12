@@ -81,14 +81,35 @@ export interface RoutineRecord {
     type: 'pro' | 'con' | 'info';
     msg: string;
   }[];
-  /** AI 메커니즘 분석 리포트 (있을 수도 없을 수도) */
-  mechanismReport?: {
-    conclusion: string;
-    mechanism: string;
-    improvements: string;
-    generatedAt: string;
-  };
+  /** AI 메커니즘 분석 리포트 (생성 후 캐싱됨) */
+  mechanismReport?: MechanismReport;
   createdAt: string;
+}
+
+/** AI가 작성한 시너지 메커니즘 분석 리포트 */
+export interface MechanismReport {
+  /** 짧은 타이틀 (예: "오늘의 저녁 루틴 시너지 메커니즘") */
+  title: string;
+  /** 종합 결론 (2-3 문단, 줄바꿈 \n 사용) */
+  conclusion: string;
+  /** 개선 권장사항 (빈 문자열이면 표시 안 함) */
+  improvements: string;
+  /** 단계별 시너지 설명 — 사용 제품 순서대로 */
+  steps: MechanismStep[];
+  generatedAt: string;
+}
+
+export interface MechanismStep {
+  /** "S1" 또는 "S4-1" 같은 라벨 */
+  stepLabel: string;
+  brand: string;
+  productName: string;
+  /** 짧은 작용원리 키워드 (예: "수분 자석") */
+  role: string;
+  /** 작용 메커니즘 본문 (2-3 문장, 줄바꿈 \n) */
+  body: string;
+  /** 이 단계 직후의 피부 상태 한 줄 */
+  result: string;
 }
 
 /** 일자별 피부 컨디션 기록 */

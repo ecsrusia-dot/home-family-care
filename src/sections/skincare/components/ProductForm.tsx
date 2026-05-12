@@ -8,6 +8,7 @@ import type {
   Weight,
 } from '../types';
 import {
+  ALL_STEPS,
   cleanserTypes,
   packTypes,
   step6Subs,
@@ -162,7 +163,7 @@ export default function ProductForm({
       {/* 단계 선택 */}
       <Field label="단계 *">
         <div className="grid grid-cols-7 gap-1.5">
-          {(Object.keys(stepMeta) as unknown as SkincareStep[]).map((s) => (
+          {ALL_STEPS.map((s) => (
             <button
               key={s}
               type="button"

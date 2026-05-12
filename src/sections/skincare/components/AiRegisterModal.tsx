@@ -16,13 +16,20 @@ import type { Product } from '../types';
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** "프로필 열기"가 필요할 때 부모에서 호출 */
-  onOpenProfile: () => void;
+  /** "프로필 열기"가 필요할 때 부모에서 호출. 미지정 시 안내 텍스트만 표시 */
+  onOpenProfile?: () => void;
+  /** 저장 성공 시 호출 — 부모에서 picker step과 일치하면 자동 선택 가능 */
+  onSaved?: (product: Product) => void;
 }
 
 type Stage = 'input' | 'analyzing' | 'edit';
 
-export default function AiRegisterModal({ open, onClose, onOpenProfile }: Props) {
+export default function AiRegisterModal({
+  open,
+  onClose,
+  onOpenProfile,
+  onSaved,
+}: Props) {
   const { data, update } = useSkincare();
   const [stage, setStage] = useState<Stage>('input');
   const [input, setInput] = useState('');
@@ -112,6 +119,9 @@ export default function AiRegisterModal({ open, onClose, onOpenProfile }: Props)
       };
       await update({ inventory: [...data.inventory, product] });
 
+      // 부모에 등록된 제품 알림 (picker 자동 선택 등에 활용)
+      onSaved?.(product);
+
       // 백그라운드 학습 — 실패해도 무시
       const allIngs = [
         ...(draft.keyIngredients ?? []),
@@ -178,12 +188,15 @@ export default function AiRegisterModal({ open, onClose, onOpenProfile }: Props)
           {!hasApiKey && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
               ⚠️ AI API 키가 설정되지 않았습니다.{' '}
-              <button
-                onClick={onOpenProfile}
-                className="underline font-bold"
-              >
-                내 정보에서 입력
-              </button>
+              {onOpenProfile ? (
+                <button onClick={onOpenProfile} className="underline font-bold">
+                  내 정보에서 입력
+                </button>
+              ) : (
+                <span className="font-bold">
+                  상단 우측 ⚙️ "내 정보"에서 Gemini API 키를 입력하세요.
+                </span>
+              )}
             </div>
           )}
 

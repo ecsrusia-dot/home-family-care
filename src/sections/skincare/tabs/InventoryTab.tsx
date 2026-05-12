@@ -6,7 +6,7 @@ import ProductForm, {
 } from '../components/ProductForm';
 import ProductDetailModal from '../components/ProductDetailModal';
 import AiRegisterModal from '../components/AiRegisterModal';
-import { stepMeta } from '../meta';
+import { ALL_STEPS, stepMeta } from '../meta';
 import type { Product, SkincareStep } from '../types';
 import { getProductBadges, newProductId } from '../utils';
 import { useSkincare } from '../useSkincare';
@@ -169,7 +169,7 @@ export default function InventoryTab({ onOpenProfile }: InventoryTabProps) {
           >
             전체
           </button>
-          {(Object.keys(stepMeta) as unknown as SkincareStep[]).map((s) => (
+          {ALL_STEPS.map((s) => (
             <button
               key={s}
               onClick={() => setStepFilter(s)}
@@ -216,7 +216,7 @@ export default function InventoryTab({ onOpenProfile }: InventoryTabProps) {
 
       {/* 단계별 그룹 */}
       {!inventoryEmpty &&
-        (Object.keys(stepMeta) as unknown as SkincareStep[])
+        ALL_STEPS
           .filter((s) => grouped[s] && grouped[s].length > 0)
           .map((s) => (
             <div key={s} className="bg-white rounded-2xl shadow-card p-4">

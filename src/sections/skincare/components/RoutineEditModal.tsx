@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Moon, Save, Sun } from 'lucide-react';
 import Modal from '../../../components/ui/Modal';
 import { useSkincare } from '../useSkincare';
 import {
+  ALL_STEPS,
   conditionOptions,
   goalOptions,
-  stepMeta,
 } from '../meta';
 import type {
+  Product,
   RoutineRecord,
   RoutineSelection,
   SkinCondition,
@@ -17,6 +18,7 @@ import { computeAnalysis } from '../analysis';
 import RoutineStepRow from './RoutineStepRow';
 import StepPickerSheet from './StepPickerSheet';
 import AnalysisCard from './AnalysisCard';
+import AiRegisterModal from './AiRegisterModal';
 
 interface Props {
   record: RoutineRecord | null;
@@ -34,6 +36,8 @@ export default function RoutineEditModal({ record, onClose }: Props) {
     1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [],
   });
   const [pickerStep, setPickerStep] = useState<SkincareStep | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
+  const aiTriggeredFromStep = useRef<SkincareStep | null>(null);
   const [saving, setSaving] = useState(false);
 
   // 모달이 열릴 때 record로 초기화
@@ -208,7 +212,7 @@ export default function RoutineEditModal({ record, onClose }: Props) {
         <div className="bg-slate-50 rounded-xl p-3">
           <h3 className="text-xs font-bold text-slate-700 mb-3">스텝별 제품</h3>
           <div className="grid gap-3">
-            {(Object.keys(stepMeta) as unknown as SkincareStep[]).map((s) => (
+            {ALL_STEPS.map((s) => (
               <RoutineStepRow
                 key={s}
                 step={s}
@@ -233,6 +237,26 @@ export default function RoutineEditModal({ record, onClose }: Props) {
         onClose={() => setPickerStep(null)}
         onToggle={(id) => {
           if (pickerStep !== null) toggleProduct(pickerStep, id);
+        }}
+        onAiRegister={() => {
+          aiTriggeredFromStep.current = pickerStep;
+          setPickerStep(null);
+          setAiOpen(true);
+        }}
+      />
+
+      <AiRegisterModal
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        onSaved={(product: Product) => {
+          const target = aiTriggeredFromStep.current;
+          if (target !== null && product.step === target) {
+            setRoutine((prev) => ({
+              ...prev,
+              [target]: [...(prev[target] ?? []), product.id],
+            }));
+          }
+          aiTriggeredFromStep.current = null;
         }}
       />
     </Modal>

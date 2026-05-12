@@ -122,6 +122,13 @@ export const ingredientDict: Record<string, IngredientInfo> = {
   },
 };
 
+/**
+ * 모든 단계의 숫자 배열.
+ * ⚠️ Object.keys(stepMeta)는 문자열을 반환하므로 step 비교(p.step === s) 시 절대 사용 금지.
+ * 단계를 순회할 때는 반드시 이 ALL_STEPS를 사용한다.
+ */
+export const ALL_STEPS: SkincareStep[] = [1, 2, 3, 4, 5, 6, 7];
+
 /** 단계 1~7 메타정보 */
 export const stepMeta: Record<
   SkincareStep,

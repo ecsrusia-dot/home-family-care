@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Moon, Save, Sun } from 'lucide-react';
 import { useSkincare } from '../useSkincare';
 import {
+  ALL_STEPS,
   conditionOptions,
   goalOptions,
-  stepMeta,
 } from '../meta';
 import type {
+  Product,
   RoutineRecord,
   RoutineSelection,
   SkinCondition,
@@ -18,6 +19,7 @@ import { getTodayDateString, newRecordId } from '../utils';
 import StepPickerSheet from '../components/StepPickerSheet';
 import AnalysisCard from '../components/AnalysisCard';
 import RoutineStepRow from '../components/RoutineStepRow';
+import AiRegisterModal from '../components/AiRegisterModal';
 
 export default function SimulatorTab() {
   const { data, update } = useSkincare();
@@ -28,6 +30,9 @@ export default function SimulatorTab() {
   const [goal, setGoal] = useState<string>(goalOptions[0].value);
   const [routine, setRoutine] = useState<RoutineSelection>(EMPTY_ROUTINE);
   const [pickerStep, setPickerStep] = useState<SkincareStep | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
+  /** AI 등록이 어느 단계의 picker에서 호출되었는지 기억 (자동 선택용) */
+  const aiTriggeredFromStep = useRef<SkincareStep | null>(null);
   const [saving, setSaving] = useState(false);
 
   // 실시간 분석
@@ -189,7 +194,7 @@ export default function SimulatorTab() {
             )}
           </div>
           <div className="grid gap-3">
-            {(Object.keys(stepMeta) as unknown as SkincareStep[]).map((s) => (
+            {ALL_STEPS.map((s) => (
               <RoutineStepRow
                 key={s}
                 step={s}
@@ -226,6 +231,27 @@ export default function SimulatorTab() {
         onClose={() => setPickerStep(null)}
         onToggle={(id) => {
           if (pickerStep !== null) toggleProduct(pickerStep, id);
+        }}
+        onAiRegister={() => {
+          aiTriggeredFromStep.current = pickerStep;
+          setPickerStep(null);
+          setAiOpen(true);
+        }}
+      />
+
+      {/* AI 등록 모달 — picker에서 트리거되며, step 일치 시 자동 선택 */}
+      <AiRegisterModal
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        onSaved={(product: Product) => {
+          const target = aiTriggeredFromStep.current;
+          if (target !== null && product.step === target) {
+            setRoutine((prev) => ({
+              ...prev,
+              [target]: [...(prev[target] ?? []), product.id],
+            }));
+          }
+          aiTriggeredFromStep.current = null;
         }}
       />
     </div>

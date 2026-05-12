@@ -1,7 +1,6 @@
 import { CheckCircle2, Info, ShieldAlert, Sparkles } from 'lucide-react';
 import type { AnalysisResult, Feedback } from '../analysis';
-import { stepMeta } from '../meta';
-import type { SkincareStep } from '../types';
+import { ALL_STEPS, stepMeta } from '../meta';
 
 interface Props {
   analysis: AnalysisResult | null;
@@ -50,7 +49,7 @@ export default function AnalysisCard({ analysis }: Props) {
       )}
 
       {/* 단계별 피드백 */}
-      {(Object.keys(stepMeta) as unknown as SkincareStep[])
+      {ALL_STEPS
         .filter((s) => analysis.stepFeedback[s].length > 0)
         .map((s) => (
           <FeedbackList

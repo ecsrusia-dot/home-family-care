@@ -233,9 +233,11 @@ Vite 프로젝트 부트스트랩, Tailwind 설정, Firebase 초기화, Google �
 
 ---
 
-## 11. 마이그레이션 전략 (기존 스킨케어 데이터)
+## 11. 기존 스킨케어 데이터 처리 방침
 
-기존 `my-ai-skincare` Firestore의 `users/{uid}` 문서에 들어있는 inventory·history·conditionHistory·learnedIngredients·profile을 새 경로로 옮긴다. 한 번만 돌리면 되는 일회성 스크립트를 `scripts/migrate-skincare.ts`로 작성해 로컬에서 Admin SDK로 실행한다. 흐름은 (1) 본인 uid 확인 → (2) 새 `families/{familyId}` 생성하고 `members: [본인uid]` 세팅 → (3) 기존 5개 필드를 `families/{familyId}/skincare/main` 문서로 복사 → (4) 검증 후 기존 데이터는 백업 폴더로 이동.
+**새 Firebase 프로젝트(`home-family-care`)를 사용하므로 마이그레이션은 하지 않는다.** 기존 `my-ai-skincare` 프로젝트와 `legacy/skincare.html`은 그대로 보존되며, 새 통합 앱은 빈 상태에서 시작한다. 그동안 쌓아둔 스킨케어 기록을 조회하고 싶을 때는 언제든 `legacy/skincare.html`을 브라우저로 열어 예전처럼 사용할 수 있다.
+
+Phase 2에서는 기존 단일 HTML의 **UI와 로직만** 새 앱의 스킨케어 섹션으로 이식한다. 즉 화면과 기능은 같지만 데이터는 깨끗한 새 Firestore에서 시작한다. 만약 나중에 옛 기록을 새 앱으로 옮기고 싶어지면 그때 일회성 수동 입력 또는 별도 도구를 검토한다.
 
 ---
 

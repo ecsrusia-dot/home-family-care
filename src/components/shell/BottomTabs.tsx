@@ -1,11 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Sparkles, NotebookPen, Cat, Home } from 'lucide-react';
-import type { ComponentType } from 'react';
+import { Sparkles, NotebookPen, Cat, Home, type LucideIcon } from 'lucide-react';
 
 interface Tab {
   to: string;
   label: string;
-  Icon: ComponentType<{ size?: number; className?: string }>;
+  Icon: LucideIcon;
 }
 
 const TABS: Tab[] = [

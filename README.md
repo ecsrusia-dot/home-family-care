@@ -30,16 +30,18 @@ npm run preview
 
 ## 환경 변수
 
-`.env.local` 파일을 만들고 아래 값을 채운다. (기존 `my-ai-skincare` 프로젝트의 웹 설정값을 그대로 사용)
+새 Firebase 프로젝트(`home-family-care`)를 만들고 그 웹 앱 설정값을 `.env.local`에 채운다.
 
 ```env
 VITE_FIREBASE_API_KEY=AIzaSy...
-VITE_FIREBASE_AUTH_DOMAIN=my-ai-skincare.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=my-ai-skincare
-VITE_FIREBASE_STORAGE_BUCKET=my-ai-skincare.firebasestorage.app
-VITE_FIREBASE_MESSAGING_SENDER_ID=684962829401
-VITE_FIREBASE_APP_ID=1:684962829401:web:0e2b7371c23c4d9a3b4d48
+VITE_FIREBASE_AUTH_DOMAIN=home-family-care.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=home-family-care
+VITE_FIREBASE_STORAGE_BUCKET=home-family-care.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=1:...:web:...
 ```
+
+기존 스킨케어 데이터는 별도의 `my-ai-skincare` 프로젝트와 `legacy/skincare.html`에 그대로 남아 있고, 새 통합 앱은 깨끗한 새 프로젝트에서 시작한다.
 
 > Firebase 클라이언트 SDK 키는 공개되어도 무방하지만, **Firestore/Storage 보안 규칙**을 가족 멤버 단위로 반드시 잠가야 한다.
 

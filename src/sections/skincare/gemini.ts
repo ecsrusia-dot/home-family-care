@@ -233,6 +233,22 @@ export async function analyzeProduct(args: {
 }
 
 /**
+ * 기존 제품(브랜드 + 이름)을 다시 분석.
+ * 결과로 최신 분석 정보를 반환하므로 호출 측에서 inventory 업데이트.
+ */
+export async function reanalyzeProduct(args: {
+  brand: string;
+  name: string;
+  apiKey: string;
+}): Promise<AiAnalyzedProduct> {
+  const { brand, name, apiKey } = args;
+  return analyzeProduct({
+    input: `${brand} ${name}`.trim(),
+    apiKey,
+  });
+}
+
+/**
  * 사전에 없는 미지 성분을 가장 잘 맞는 대표 카테고리에 매핑해서 학습.
  * 결과는 LearnedIngredients 객체(미지성분 → 카테고리명)로 반환.
  * 실패하면 빈 객체 반환 (조용히 무시).

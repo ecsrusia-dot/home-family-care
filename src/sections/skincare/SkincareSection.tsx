@@ -83,10 +83,10 @@ export default function SkincareSection() {
       </div>
 
       {/* 서브탭 바 */}
-      <div className="bg-white rounded-2xl shadow-card p-2 mb-4 flex gap-1">
-        <SubTab to="simulator" Icon={Sliders} label="시뮬레이터" />
-        <SubTab to="tracker" Icon={Activity} label="트래커" />
-        <SubTab to="inventory" Icon={Package} label="인벤토리" />
+      <div className="bg-white rounded-2xl shadow-card p-1.5 mb-4 grid grid-cols-3 gap-1">
+        <SubTab to="simulator" Icon={Sliders} label="시뮬레이터" shortLabel="시뮬" />
+        <SubTab to="tracker" Icon={Activity} label="트래커" shortLabel="트래커" />
+        <SubTab to="inventory" Icon={Package} label="인벤토리" shortLabel="인벤" />
       </div>
 
       {/* 탭 콘텐츠 */}
@@ -111,23 +111,27 @@ export default function SkincareSection() {
 interface SubTabProps {
   to: string;
   Icon: LucideIcon;
+  /** 넓은 화면용 라벨 */
   label: string;
+  /** 좁은 화면용 짧은 라벨 (없으면 label 그대로) */
+  shortLabel?: string;
 }
 
-function SubTab({ to, Icon, label }: SubTabProps) {
+function SubTab({ to, Icon, label, shortLabel }: SubTabProps) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex-1 py-2.5 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition ${
+        `py-2.5 px-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition whitespace-nowrap ${
           isActive
             ? 'bg-brand-ink text-brand-accent shadow-sm'
             : 'text-slate-500 hover:bg-slate-50'
         }`
       }
     >
-      <Icon size={16} />
-      <span>{label}</span>
+      <Icon size={16} className="shrink-0" />
+      <span className="sm:hidden">{shortLabel ?? label}</span>
+      <span className="hidden sm:inline">{label}</span>
     </NavLink>
   );
 }

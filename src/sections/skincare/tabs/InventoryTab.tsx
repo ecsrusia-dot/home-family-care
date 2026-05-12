@@ -109,9 +109,10 @@ export default function InventoryTab({ onOpenProfile }: InventoryTabProps) {
   return (
     <div className="grid gap-4">
       {/* 검색/필터 + 추가 버튼 */}
-      <div className="bg-white rounded-2xl shadow-card p-3">
+      <div className="bg-white rounded-2xl shadow-card p-3 space-y-2">
+        {/* Row 1: 검색바 + 액션 버튼들 (좁은 화면에서도 항상 한 줄) */}
         <div className="flex items-center gap-2">
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Search
               size={16}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -119,14 +120,15 @@ export default function InventoryTab({ onOpenProfile }: InventoryTabProps) {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="제품·브랜드·성분 검색"
+              placeholder="검색"
               className="w-full h-10 pl-9 pr-3 rounded-lg bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
             />
           </div>
           <button
             onClick={() => setAiOpen(true)}
-            className="h-10 px-3 rounded-lg bg-yellow-400 text-slate-900 text-sm font-bold flex items-center gap-1 shrink-0 hover:bg-yellow-500 transition"
+            className="h-10 w-10 sm:w-auto sm:px-3 rounded-lg bg-yellow-400 text-slate-900 text-sm font-bold flex items-center justify-center gap-1 shrink-0 hover:bg-yellow-500 transition"
             title="AI 스마트 등록"
+            aria-label="AI 등록"
           >
             <Sparkles size={16} />
             <span className="hidden sm:inline">AI 등록</span>
@@ -136,15 +138,17 @@ export default function InventoryTab({ onOpenProfile }: InventoryTabProps) {
               setAdding(true);
               setDraft(null);
             }}
-            className="h-10 px-3 rounded-lg bg-brand-ink text-brand-accent text-sm font-bold flex items-center gap-1 shrink-0"
+            className="h-10 w-10 sm:w-auto sm:px-3 rounded-lg bg-brand-ink text-brand-accent text-sm font-bold flex items-center justify-center gap-1 shrink-0"
+            title="제품 직접 추가"
+            aria-label="제품 추가"
           >
             <Plus size={16} />
             <span className="hidden sm:inline">제품 추가</span>
           </button>
         </div>
 
-        {/* 단계 필터 + 브랜드 필터 */}
-        <div className="mt-2 flex items-center gap-2 overflow-x-auto hide-scrollbar">
+        {/* Row 2: 단계 필터 (좁은 화면에선 가로 스크롤) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1">
           <button
             onClick={() => setStepFilter('all')}
             className={`px-2.5 py-1 rounded-md text-xs font-bold shrink-0 ${
@@ -169,21 +173,23 @@ export default function InventoryTab({ onOpenProfile }: InventoryTabProps) {
               {stepMeta[s].short}
             </button>
           ))}
-          {brands.length > 0 && (
-            <select
-              value={brandFilter}
-              onChange={(e) => setBrandFilter(e.target.value)}
-              className="ml-auto h-7 px-2 rounded-md bg-slate-100 text-xs font-medium border-0 shrink-0"
-            >
-              <option value="">브랜드 전체</option>
-              {brands.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-          )}
         </div>
+
+        {/* Row 3: 브랜드 필터 (별도 줄, 좁은 화면에서도 풀폭) */}
+        {brands.length > 0 && (
+          <select
+            value={brandFilter}
+            onChange={(e) => setBrandFilter(e.target.value)}
+            className="w-full h-9 px-3 rounded-md bg-slate-50 text-xs font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
+          >
+            <option value="">브랜드 전체 ({brands.length})</option>
+            {brands.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* 빈 상태 안내 */}

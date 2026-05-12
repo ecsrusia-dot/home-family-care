@@ -56,8 +56,12 @@ export interface Product {
   imageBase64?: string;
   imageMime?: string;
   createdAt?: string;
-  /** AI 분석 정보 */
-  aiNotes?: string;
+  /** AI가 추천하는 사용 시간대 */
+  time?: 'day' | 'night' | 'all';
+  /** AI가 작성한 권장 사용법 */
+  usage?: string;
+  /** AI가 작성한 주의사항 */
+  precautions?: string;
 }
 
 /** 단계별 선택된 제품 ID 배열 (1~7) */

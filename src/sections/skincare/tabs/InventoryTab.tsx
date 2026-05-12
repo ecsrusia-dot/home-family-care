@@ -1,16 +1,22 @@
 import { useMemo, useState } from 'react';
-import { Plus, Search, Package } from 'lucide-react';
+import { Plus, Search, Package, Sparkles } from 'lucide-react';
 import Modal from '../../../components/ui/Modal';
 import ProductForm, {
   type ProductDraft,
 } from '../components/ProductForm';
 import ProductDetailModal from '../components/ProductDetailModal';
+import AiRegisterModal from '../components/AiRegisterModal';
 import { stepMeta } from '../meta';
 import type { Product, SkincareStep } from '../types';
 import { getProductBadges, newProductId } from '../utils';
 import { useSkincare } from '../useSkincare';
 
-export default function InventoryTab() {
+interface InventoryTabProps {
+  /** AI 등록 모달에서 "내 정보 열기" 트리거를 위해 부모로 위임 */
+  onOpenProfile: () => void;
+}
+
+export default function InventoryTab({ onOpenProfile }: InventoryTabProps) {
   const { data, update } = useSkincare();
   const [search, setSearch] = useState('');
   const [brandFilter, setBrandFilter] = useState('');
@@ -20,6 +26,7 @@ export default function InventoryTab() {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [detail, setDetail] = useState<Product | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
   const [draft, setDraft] = useState<ProductDraft | null>(null);
   const [formValid, setFormValid] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -116,6 +123,14 @@ export default function InventoryTab() {
               className="w-full h-10 pl-9 pr-3 rounded-lg bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
             />
           </div>
+          <button
+            onClick={() => setAiOpen(true)}
+            className="h-10 px-3 rounded-lg bg-yellow-400 text-slate-900 text-sm font-bold flex items-center gap-1 shrink-0 hover:bg-yellow-500 transition"
+            title="AI 스마트 등록"
+          >
+            <Sparkles size={16} />
+            <span className="hidden sm:inline">AI 등록</span>
+          </button>
           <button
             onClick={() => {
               setAdding(true);
@@ -326,6 +341,16 @@ export default function InventoryTab() {
           setEditing(p);
         }}
         onDelete={onDelete}
+      />
+
+      {/* AI 등록 모달 */}
+      <AiRegisterModal
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        onOpenProfile={() => {
+          setAiOpen(false);
+          onOpenProfile();
+        }}
       />
     </div>
   );

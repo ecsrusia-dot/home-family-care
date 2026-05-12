@@ -27,8 +27,10 @@ export const firebaseApp = initializeApp(firebaseConfig);
 
 // Firestore: 모바일 캐리어/공용WiFi/일부 브라우저에서 WebSocket이 막힐 때
 // 자동으로 HTTPS long-polling으로 폴백 + IndexedDB 오프라인 캐시.
+// ignoreUndefinedProperties: undefined 필드를 자동으로 제외해 저장 에러 방지.
 export const db = initializeFirestore(firebaseApp, {
   experimentalAutoDetectLongPolling: true,
+  ignoreUndefinedProperties: true,
   localCache: persistentLocalCache({
     tabManager: persistentMultipleTabManager(),
     cacheSizeBytes: CACHE_SIZE_UNLIMITED,

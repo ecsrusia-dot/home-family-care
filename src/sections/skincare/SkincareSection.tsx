@@ -94,7 +94,10 @@ export default function SkincareSection() {
         <Route index element={<Navigate to="simulator" replace />} />
         <Route path="simulator" element={<SimulatorTab />} />
         <Route path="tracker" element={<TrackerTab />} />
-        <Route path="inventory" element={<InventoryTab />} />
+        <Route
+          path="inventory"
+          element={<InventoryTab onOpenProfile={() => setProfileOpen(true)} />}
+        />
         <Route path="*" element={<Navigate to="simulator" replace />} />
       </Routes>
 

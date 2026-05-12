@@ -1,0 +1,8 @@
+cd /d "C:\Users\USER\Documents\Claude\Projects\my home and familiy care"
+git add .
+git commit -m "업데이트내용기입"
+git push
+
+
+//배포 성공확인
+npm run build

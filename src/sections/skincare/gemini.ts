@@ -17,7 +17,6 @@ import type {
   CleanserType,
   LearnedIngredients,
   PackType,
-  Product,
   SkincareStep,
   Step6Sub,
   Weight,
